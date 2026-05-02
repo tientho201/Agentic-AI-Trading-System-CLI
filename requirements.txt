@@ -10,3 +10,4 @@ pandas-ta
 langchain
 openai
 tiktoken
+setuptools
