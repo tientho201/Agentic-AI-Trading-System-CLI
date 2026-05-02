@@ -1,0 +1,12 @@
+fastapi[standard]
+python-dotenv
+requests
+pydantic
+python-dotenv
+pandas
+ccxt
+ta-lib
+pandas-ta
+langchain
+openai
+tiktoken
