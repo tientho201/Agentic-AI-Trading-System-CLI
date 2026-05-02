@@ -68,7 +68,7 @@ class BinanceClient:
                 clean_symbol = symbol.upper()
             # Hàm của python-binance trả về sẵn list dữ liệu nến
             klines = self.client.futures_klines(symbol=clean_symbol, interval=timeframe, limit=limit)
-            
+    
             # Chỉ việc format lại theo schema của mình
             return [{
                 "timestamp": k[0],
@@ -82,3 +82,6 @@ class BinanceClient:
             logger.error(f"Error fetching OHLCV for {symbol}: {e}")
             raise CustomException(e, sys)
 
+if __name__ == "__main__":
+    binance_client = BinanceClient()
+    print(binance_client.get_OHCLV())

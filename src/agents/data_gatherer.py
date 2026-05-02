@@ -30,7 +30,7 @@ class DataGathererAgent:
             
             candles = [OHLCV(**candle) for candle in raw_candles]
             current_price = candles[-1].close if candles else 0.0
-            
+            logger.info(f"Market data gathered for {symbol}")
             return MarketData(
                 symbol=symbol,
                 timeframe=timeframe,
@@ -56,7 +56,7 @@ class DataGathererAgent:
         logger.info(f"Gathering news for {symbol}")
         try:
             raw_news =  self.news_api.get_recent_news(symbol=symbol, limit=limit)
-            
+            logger.info(f"News data gathered for {symbol}")
             return raw_news
         except CustomException as e:
             logger.error(f"Error gathering news for {symbol}: {e}")

@@ -6,14 +6,14 @@ from datetime import datetime
 # ===== Enums =====
 # Sentiment labels for sentiment analysis
 class SetimentLabel(str , Enum):
-    POSITIVE = "positive"
-    NEGATIVE = "negative"
-    NEUTRAL = "neutral"
+    BULLISH = "BULLISH"
+    BEARISH = "BEARISH"
+    NEUTRAL = "NEUTRAL"
 
 class TradeAction(str, Enum):
-    BUY = "buy"
-    SELL = "sell"
-    HOLD = "hold"
+    BUY = "BUY"
+    SELL = "SELL"
+    HOLD = "HOLD"
 
 # # Liquidation Data
 # class LiquidationLevels(BaseModel):
@@ -51,12 +51,6 @@ class NewsItem(BaseModel):
     published_at: str = Field(description="Timestamp of the news")
     url: Optional[str] = Field(default=None, description="URL of the news")
 
-class SentimentAnalysis(BaseModel):
-    """Sentiment analysis result for a given text"""
-    label: SetimentLabel = Field(description="Sentiment label (positive, negative, neutral)")
-    score: float = Field(description="Confidence score (0.0 to 1.0)")
-    reasoning: str = Field(description="Reasoning behind the sentiment analysis")
-    keywords: List[str] = Field(description="Keywords extracted from the text")
     
 # Agent Result
 class MovingAverages(BaseModel):
