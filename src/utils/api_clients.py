@@ -1,20 +1,13 @@
-import ccxt
+
 import feedparser
 from binance.client import Client
 
 from src.logging.logger import logger
 from src.exception.exception import CustomException
 
-import requests
 import os
 import sys
 
-from binance import ThreadedWebsocketManager
-from collections import defaultdict
-import time
-
-from datetime import datetime
-import json
 from dotenv import load_dotenv, find_dotenv
 
 _ = load_dotenv(find_dotenv())

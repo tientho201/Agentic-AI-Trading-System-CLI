@@ -65,7 +65,7 @@ class MovingAverages(BaseModel):
     ma_200: float = Field(description="200-period Simple Moving Average")
     cross_signal: str = Field(description="Golden Cross or Death Cross signal")
 
-class TechnicalAnalysisResult(BaseModel):
+class TechnicalResult(BaseModel):
     """Technical Analysis Agent Result"""
     rsi: float = Field(description="Relative Strength Index (RSI)")
     macd: float = Field(description="Moving Average Convergence Divergence (MACD)")

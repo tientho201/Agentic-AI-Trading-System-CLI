@@ -10,3 +10,4 @@ tiktoken
 setuptools
 feedparser
 python-binance
+pandas-ta

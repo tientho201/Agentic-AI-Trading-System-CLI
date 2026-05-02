@@ -61,10 +61,3 @@ class DataGathererAgent:
         except CustomException as e:
             logger.error(f"Error gathering news for {symbol}: {e}")
             raise CustomException(e, sys)
-
-if __name__ == "__main__":
-    data_gatherer = DataGathererAgent()
-    # market_data = data_gatherer.gather_data("BTC/USDT", "1h", 100)
-    # print(market_data)
-    news = data_gatherer.gather_news("BTC/USD", 10)
-    print(news)
