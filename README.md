@@ -1,114 +1,131 @@
-# Crypto AI Agent System
+# Agentic AI Trading System ⚡
 
-Một hệ thống AI đa đặc vụ (Multi-Agent System) tự động thu thập dữ liệu thị trường tiền điện tử (Crypto), phân tích tâm lý đám đông, phân tích kỹ thuật và đưa ra các cảnh báo/tín hiệu giao dịch (ví dụ: dự đoán vùng đỉnh, đáy).
+Hệ thống giao dịch tự động bằng AI, phân tích thị trường dựa trên các chỉ số kỹ thuật và tâm lý thị trường thông qua CLI (Command Line Interface).
 
-## Kiến trúc Hệ thống (Agents)
+Hệ thống sử dụng **GPT-4o** (tùy chọn) để đưa ra các nhận định chuyên sâu dựa trên sự hội tụ (confluence) của tín hiệu kỹ thuật (Technical Analysis) và tín hiệu tâm lý (Sentiment Analysis) thu thập từ tin tức thị trường thực tế.
 
-Hệ thống được thiết kế với nhiều Agent đóng các vai trò khác nhau, phối hợp với nhau thông qua một Orchestrator:
+---
 
-1. **Data Gatherer Agent** (`src/agents/data_gatherer.py`):
-   - Chịu trách nhiệm cào dữ liệu (scrape/fetch) từ các nguồn tin tức (CoinDesk, CryptoPanic), mạng xã hội (Twitter, Reddit, Telegram) và dữ liệu giá/volume từ sàn giao dịch (Binance, CoinGecko).
-2. **Sentiment Analyzer Agent** (`src/agents/sentiment_analyzer.py`):
-   - Phân tích ngôn ngữ tự nhiên (NLP) trên các dữ liệu chữ (text) thu thập được để chấm điểm tâm lý thị trường (Bullish, Bearish, Neutral, F&G Index).
-3. **Technical Analyst Agent** (`src/agents/technical_analyst.py`):
-   - Phân tích biểu đồ và các chỉ báo kỹ thuật (RSI, MACD, Bollinger Bands, Volume Profile...) dựa trên dữ liệu giá (OHLCV).
-4. **Signal Generator Agent** (`src/agents/signal_generator.py`):
-   - Đóng vai trò là "Người ra quyết định". Tổng hợp kết quả từ Sentiment và Technical để đưa ra tín hiệu cảnh báo (Mua/Bán, Cảnh báo vùng đỉnh/đáy, Rủi ro thanh lý).
-5. **Orchestrator** (`src/core/orchestrator.py`):
-   - Bộ điều phối chính, quản lý luồng dữ liệu giữa các Agent, lưu trữ ngữ cảnh ngắn hạn/dài hạn (Memory) và lập lịch chạy (scheduler).
+## 🎯 Tính năng nổi bật
 
-## Cấu trúc Thư mục Hiện Tại
+1. **Giao diện CLI mạnh mẽ**: Sử dụng thư viện `rich` để hiển thị các bảng dữ liệu, chỉ báo kỹ thuật, và tiến trình đếm ngược sinh động ngay trên terminal.
+2. **Technical Analysis Agent**: Tự động tính toán các chỉ báo kỹ thuật quan trọng:
+   - Xu hướng hiện tại (BULLISH/BEARISH/NEUTRAL)
+   - RSI (14)
+   - MACD
+   - Moving Averages (MA20, MA50, MA200) và MA Cross (Golden/Death Cross)
+   - Các mức Kháng cự (Resistance) / Hỗ trợ (Support)
+3. **Sentiment Analysis Agent**: Thu thập và phân tích các tin tức thị trường để đánh giá tâm lý chung.
+4. **OpenAI GPT-4o Integration**: Phân tích chuyên sâu từ AI, đưa ra hành động cụ thể, lời khuyên vào lệnh (entry advice), và quản lý rủi ro (risk advice).
+5. **Real-time Live Data & Demo Mode**: 
+   - **Live**: Kéo dữ liệu thực từ Binance Futures.
+   - **Demo**: Chạy bằng dữ liệu giả lập có độ biến động tương tự thực tế.
+6. **Auto-Analysis Interval**: Lên lịch tự động cập nhật và phân tích dữ liệu sau mỗi khoảng thời gian định trước (vd: 30 giây, 1 phút, 5 phút, ...).
 
-```text
-Agentic_AI_System/
-├── .github/                    # Chứa file CI/CD workflows
-├── data/                       # Thư mục chứa dữ liệu tĩnh (raw/processed)
-├── data_schema/                # Định nghĩa schema cấu trúc dữ liệu
-│   └── schema.yaml             # Schema chuẩn hóa
-├── src/                        # Chứa toàn bộ source code của dự án
-│   ├── agents/                 # Logic của từng Agent cụ thể
-│   │   ├── data_gatherer.py
-│   │   ├── sentiment_analyzer.py
-│   │   ├── signal_generator.py
-│   │   └── technical_analyst.py
-│   ├── api/                    # Cung cấp API (FastAPI) để giao tiếp bên ngoài
-│   │   ├── routes.py
-│   │   └── schemas.py
-│   ├── config/                 # File cấu hình ứng dụng
-│   │   └── settings.yaml
-│   ├── core/                   # Lõi điều phối hệ thống
-│   │   ├── memory.py           # Lưu trữ ngữ cảnh/Vector DB
-│   │   └── orchestrator.py     # Điều phối các agents
-│   ├── pipeline/               # Định nghĩa các luồng xử lý/pipeline CI/ML
-│   ├── tests/                  # Unit tests và integration tests
-│   └── utils/                  # Tiện ích dùng chung
-│       ├── api_clients.py
-│       └── logger.py
-├── .env                        # Biến môi trường (API Keys, config local)
-├── .gitignore                  # File loại trừ git
-├── docker-compose.yml          # Cấu hình multi-container (DB, app)
-├── Dockerfile                  # Đóng gói app
-├── main.py                     # Entry point chạy ứng dụng
-├── README.md                   # Tài liệu dự án
-└── requirements.txt            # Thư viện phụ thuộc
-```
+---
 
-## Hướng dẫn cài đặt (Getting Started)
+## 🚀 Hướng dẫn cài đặt
 
-### 1. Yêu cầu hệ thống
+### 1. Cài đặt Python và tạo môi trường ảo
 
-- Python 3.9+
-- Khuyến nghị dùng môi trường ảo (Virtual Environment) như `venv` hoặc `conda`.
-
-### 2. Cài đặt
-
-Clone hoặc di chuyển vào thư mục dự án:
+Yêu cầu: Python 3.10+
 
 ```bash
-cd Agentic_AI_System
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
-Tạo và kích hoạt môi trường ảo:
-
-```bash
-python -m venv venv
-# Windows:
-venv\Scripts\activate
-# MacOS/Linux:
-source venv/bin/activate
-```
-
-Cài đặt các thư viện phụ thuộc:
+### 2. Cài đặt Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Cấu hình biến môi trường
+### 3. Cấu hình biến môi trường (`.env`)
 
-Tạo file `.env` (nếu chưa có) và điền các API Key của bạn (OpenAI, Binance, Twitter...):
+Tạo file `.env` ở thư mục gốc của dự án và điền các API key của bạn:
 
 ```env
-OPENAI_API_KEY=sk-your-openai-key-here
-BINANCE_API_KEY=your-binance-key
-BINANCE_SECRET_KEY=your-binance-secret
-TWITTER_BEARER_TOKEN=your-twitter-token
+# Binance (dành cho Live Mode)
+BINANCE_API_KEY=your_binance_api_key
+BINANCE_API_SECRET=your_binance_api_secret
+
+# OpenAI (dành cho GPT-4o Analysis)
+OPENAI_KEY=your_openai_api_key
 ```
 
-### 4. Chạy hệ thống
+> **Lưu ý:** Bạn có thể chạy chế độ **Demo** và bỏ qua `OPENAI_KEY` nếu chỉ muốn xem thuật toán kỹ thuật hoạt động. 
 
-Để khởi động hệ thống, chạy file `main.py`:
+---
+
+## 🖥 Hướng dẫn sử dụng
+
+### Chạy trực tiếp (Local)
+Chạy hệ thống bằng lệnh:
 
 ```bash
-python main.py
+python3 cli.py
 ```
 
-## Các bước tiếp theo (Roadmap)
+### Chạy bằng Docker
+Bạn có thể khởi chạy ứng dụng hoàn toàn thông qua Docker. Vì đây là CLI yêu cầu tương tác (nhập thông số), hãy sử dụng lệnh sau:
 
-- [ ] Hoàn thiện `data_schema/schema.yaml` để chuẩn hóa dữ liệu đầu ra từ các nguồn.
-- [ ] Implement `src/agents/data_gatherer.py` tích hợp CCXT để lấy giá từ Binance và API báo chí.
-- [ ] Tích hợp LLM (như GPT-4 hoặc Claude) vào `src/agents/sentiment_analyzer.py` qua LangChain/LlamaIndex.
-- [ ] Viết thuật toán cho `src/agents/technical_analyst.py`.
-- [ ] Thiết kế logic tổng hợp cho `src/agents/signal_generator.py`.
-- [ ] Cài đặt API endpoints trong `src/api/routes.py` để UI/Bot có thể kết nối.
-- [ ] Thiết lập thông báo qua Telegram Bot ở `main.py` hoặc luồng pipeline.
+```bash
+docker-compose run --rm agentic-cli
+```
+> Khi sử dụng lệnh này, Docker sẽ build image (nếu chưa có), chạy container, kết nối terminal của bạn với CLI bên trong container và tự động dọn dẹp (xóa container) khi bạn thoát.
+
+### Cấu hình trong CLI:
+
+1. **Chọn cặp giao dịch**: Nhập số tương ứng với cặp giao dịch (vd: BTC/USDT, ETH/USDT, SOL/USDT...). Hoặc bạn có thể gõ trực tiếp tên cặp như `BTC/USDT`.
+2. **Chọn khung thời gian (Timeframe)**: Lựa chọn khung thời gian để phân tích (1m, 5m, 15m, 1h, 4h, 1d).
+3. **Tự động phân tích theo chu kỳ**: 
+   - Nếu bạn chọn chu kỳ (vd: `30 giây`), hệ thống sẽ tự động cập nhật dữ liệu và phân tích lại sau mỗi 30 giây. 
+   - Nếu chọn `Chỉ chạy 1 lần`, hệ thống sẽ phân tích xong rồi đợi bạn ấn `Enter` để phân tích tiếp.
+4. **Dùng GPT-4o**: 
+   - Bạn có thể bật tính năng này để gọi OpenAI phân tích chuyên sâu các chỉ số kỹ thuật và tâm lý, đưa ra **Signal**, **Entry**, và **Risk management**.
+5. **Chế độ dữ liệu**:
+   - `Demo`: Dữ liệu sinh ngẫu nhiên, không cần kết nối API Binance.
+   - `Live`: Kéo dữ liệu thực từ Binance Futures.
+
+---
+
+## 📂 Cấu trúc thư mục
+
+```
+Agentic-AI-System/
+├── .github/
+│   └── workflows/
+│       └── main.yml           # GitHub Actions CI/CD Pipeline
+├── Dockerfile                 # File build image cho hệ thống
+├── docker-compose.yml         # File cấu hình khởi chạy Docker dễ dàng
+├── cli.py                     # Entry point chính của hệ thống CLI
+├── requirements.txt           # File cài đặt thư viện
+├── .env                       # Chứa API keys (không push lên git)
+├── src/
+│   ├── agents/
+│   │   ├── technical_analyst.py   # Phân tích kỹ thuật (RSI, MACD, MA...)
+│   │   ├── sentiment_analyzer.py  # Phân tích tâm lý thị trường
+│   │   ├── signal_generator.py    # Tổng hợp tín hiệu (Rule-based)
+│   │   └── openai_analyst.py      # OpenAI GPT-4o Agent
+│   ├── api/
+│   │   └── schemas.py             # Pydantic schemas lưu trữ dữ liệu nội bộ
+│   ├── utils/
+│   │   └── api_clients.py         # Kết nối APIs ngoài (News, Binance)
+│   └── logging/
+│       └── logger.py              # Xử lý ghi log
+└── README.md                  # File tài liệu hướng dẫn
+```
+
+---
+
+## 🛠 Troubleshooting
+
+- **Lỗi `OpenAI error`:** Đảm bảo `OPENAI_KEY` trong file `.env` chính xác và tài khoản OpenAI của bạn còn credit.
+- **Lỗi kết nối Binance:** Hãy kiểm tra lại kết nối mạng hoặc thử chạy ở chế độ **Demo** để xác nhận hệ thống logic vẫn bình thường.
+- **Lỗi `ModuleNotFoundError`:** Đảm bảo bạn đã kích hoạt virtual environment (`source .venv/bin/activate`) và đã chạy `pip install -r requirements.txt`.
+
+---
+
+## 🤝 Giấy phép
+Project phục vụ mục đích nghiên cứu và tham khảo về Agentic Workflow. Không phải lời khuyên đầu tư tài chính.

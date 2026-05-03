@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  agentic-cli:
+    build: .
+    container_name: agentic_trading_cli
+    env_file:
+      - .env
+    # Bật interactive mode cho CLI
+    stdin_open: true 
+    tty: true
+    volumes:
+      - .:/app
+    command: python cli.py

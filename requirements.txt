@@ -1,8 +1,6 @@
-fastapi[standard]
 python-dotenv
 requests
 pydantic
-python-dotenv
 pandas
 langchain
 openai
@@ -11,3 +9,4 @@ setuptools
 feedparser
 python-binance
 pandas-ta
+rich
