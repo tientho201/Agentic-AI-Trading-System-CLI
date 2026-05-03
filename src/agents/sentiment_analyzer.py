@@ -164,10 +164,13 @@ class SentimentAnalyzerAgent:
             # Xác định label dựa trên điểm số trung bình
             if average_score > 0.3:
                 sentiment_label = "BULLISH"
+                keywords = bullish_word
             elif average_score < -0.3:
                 sentiment_label = "BEARISH"
+                keywords = bearish_word
             else:
                 sentiment_label = "NEUTRAL"
+                keywords = []
                 
             # Tạo một câu tóm tắt để báo cáo
             reasoning = f"Dựa trên {analyzed_news} bài báo, tâm lý chung đang là {sentiment_label} với điểm số {average_score:.2f}."
@@ -175,7 +178,7 @@ class SentimentAnalyzerAgent:
                 score=average_score,
                 label=sentiment_label,
                 reasoning=reasoning,
-                keywords=bullish_word + bearish_word
+                keywords=keywords
             )   
         except Exception as e:
             logger.error(f"Error analyzing sentiment: {e}")

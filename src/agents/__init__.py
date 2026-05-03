@@ -35,4 +35,15 @@ Bán (Short)	1. Giá nằm dưới SMA 200 & SMA 50.
 2. MACD cắt xuống đường Signal và < 0.
 3. RSI < 50 (và đang hướng xuống).
 Lưu ý: Bạn nên sử dụng các chỉ báo này trên cùng khung thời gian để có tín hiệu đồng nhất, thường dùng SMA 200/50 trên đồ thị ngày (Daily) để xác định xu hướng chính và MACD/RSI trên đồ thị ngắn hơn để tìm điểm vào. 
+
+Ba chỉ báo này bổ sung cho nhau rất tốt: Đường Trung Bình Động cho bạn thấy hướng đi lớn của giá, trong khi RSI và MACD cảnh báo thời điểm giá có thể đảo chiều hoặc tiếp tục đà.
+
+# 5. Phân Tích Cảm Tính (Sentiment Analysis)
+Thu thập và phân tích tin tức (News), thông báo trên mạng xã hội (Social Media) để đánh giá mức độ tích cực (Bullish) hay tiêu cực (Bearish) của thị trường.
+
+Tác dụng: Giúp phát hiện các yếu tố bất ngờ (tin tức đột xuất, tin đồn) ảnh hưởng đến giá.
+
+Chỉ báo kết hợp:
+
+- Sentiment Score: Tính điểm số dựa trên tần suất xuất hiện các từ khóa Bullish/Bearish trong tin tức.
 """
