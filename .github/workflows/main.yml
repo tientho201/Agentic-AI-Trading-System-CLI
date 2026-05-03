@@ -11,7 +11,7 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -30,8 +30,3 @@ jobs:
       - name: Check syntax and compile
         run: |
           python -m compileall .
-
-      # Tùy chọn: Chạy pytest nếu bạn có viết test
-      # - name: Run tests
-      #   run: |
-      #     pytest
