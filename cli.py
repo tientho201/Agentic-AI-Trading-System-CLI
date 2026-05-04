@@ -1,14 +1,23 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Agentic AI Trading CLI
-Tương tác với hệ thống phân tích tín hiệu qua terminal.
+Tuong tac voi he thong phan tich tin hieu qua terminal.
 """
 import sys
 import os
 import time
 import signal
 
-# Đảm bảo import đúng path
+# Force UTF-8 encoding for all output — fix UnicodeEncodeError with emoji
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+os.environ.setdefault("PYTHONUTF8", "1")
+
+# Dam bao import dung path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from dotenv import load_dotenv, find_dotenv
@@ -150,29 +159,37 @@ def load_data(symbol: str, timeframe: str, use_live: bool):
     return candles, news
 
 def run_analysis(symbol: str, timeframe: str, use_live: bool):
-    """Chạy toàn bộ pipeline phân tích."""
+    """Chạy pipeline qua LangGraph Consensus Engine."""
+    from src.agents.agent import run_agent
+
+    candles, news_raw = load_data(symbol, timeframe, use_live)
+    state = run_agent(
+        symbol=symbol,
+        timeframe=timeframe,
+        candles=candles,
+        news=news_raw,
+        use_live=use_live,
+    )
+    return state
+
+
+def run_analysis_no_openai(symbol: str, timeframe: str, use_live: bool):
+    """Chạy pipeline đơn giản (không dùng OpenAI)."""
     from src.api.schemas import MarketData, OHLCV, NewsItem
     from src.agents.technical_analyst import TechnicalAnalystAgent
     from src.agents.sentiment_analyzer import SentimentAnalyzerAgent
     from src.agents.signal_generator import SignalGeneratorAgent
 
-    tech_agent = TechnicalAnalystAgent()
-    sentiment_agent = SentimentAnalyzerAgent()
-    signal_agent = SignalGeneratorAgent()
-
     candles, news_raw = load_data(symbol, timeframe, use_live)
-
     ohlcv = [OHLCV(**c) for c in candles]
     md = MarketData(symbol=symbol, timeframe=timeframe,
                     current_price=ohlcv[-1].close, candles=ohlcv)
-    news_items = [NewsItem(title=n["title"], source=n["source"],
+    news_items = [NewsItem(title=n["title"], source=n.get("source",""),
                            content=n.get("content", n["title"]),
-                           published_at=n["published_at"]) for n in news_raw]
-
-    tech = tech_agent.analyze_technical(md)
-    sent = sentiment_agent.analyze_sentiment(news_items)
-    sig = signal_agent.generate_signals(symbol=symbol, sentiment=sent, technical=tech)
-
+                           published_at=n.get("published_at","")) for n in news_raw]
+    tech = TechnicalAnalystAgent().analyze_technical(md)
+    sent = SentimentAnalyzerAgent().analyze_sentiment(news_items)
+    sig  = SignalGeneratorAgent().generate_signals(symbol=symbol, sentiment=sent, technical=tech)
     return md, tech, sent, sig, news_raw
 
 
@@ -222,7 +239,81 @@ def run_openai_analysis(
         console.print(f"[yellow]⚠ OpenAI error: {e}[/yellow]")
         return None
 
-# ── Display Functions ─────────────────────────────────────────────────────────
+# ── Graph Result Display ──────────────────────────────────────────────────────
+
+def display_graph_result(state: dict, symbol: str, timeframe: str, mode: str):
+    """Hiển thị kết quả được xác nhận bởi LangGraph Consensus Engine."""
+    action   = state["final_action"]
+    conf     = state["final_confidence"]
+    warning  = state["warning"]
+    retry    = state["retry_count"]
+    color    = _signal_color(action)
+
+    # Badge đồng thuận
+    consensus = state.get("consensus", False)
+    badge = (
+        f"[bold green]\u2705 ĐỒNG THUẬN[/bold green]"
+        if consensus
+        else f"[bold red]\u26a0\ufe0f KHÔNG ĐỒNG THUẬN ({retry} lần thử)[/bold red]"
+    )
+
+    now = datetime.now().strftime("%H:%M:%S %d/%m/%Y")
+    console.print(Rule(f"[bold cyan]\u26a1 AGENTIC AI TRADING[/bold cyan]  [dim]{now}[/dim]  [yellow]{mode}[/yellow]"))
+
+    # === FINAL SIGNAL ===
+    t = Table(box=box.SIMPLE, show_header=False, padding=(0, 1))
+    t.add_column(style="dim", width=22)
+    t.add_column()
+    t.add_row("Cặp giao dịch",  f"[bold white]{symbol}[/bold white]  [{color}]{timeframe}[/{color}]")
+    t.add_row("Giá hiện tại",   f"[bold white]{fmt(state['md'].current_price)}[/bold white] USDT")
+    t.add_row("Kết luận Graph",  badge)
+    t.add_row("Tín hiệu cuối",  f"[bold {color}]{action}[/bold {color}]")
+    t.add_row("Độ tự tin",      _conf_bar(conf))
+    if state["final_entry_zone"]:
+        ez = state["final_entry_zone"]
+        t.add_row("Entry Zone", f"[cyan]{fmt(ez[0])}[/cyan] \u2013 [cyan]{fmt(ez[1])}[/cyan]")
+    t.add_row("Stop Loss",
+        f"[red]{fmt(state['final_stop_loss'])}[/red]" if state["final_stop_loss"] else "[dim]N/A[/dim]")
+    t.add_row("Take Profit",
+        f"[green]{fmt(state['final_take_profit'])}[/green]" if state["final_take_profit"] else "[dim]N/A[/dim]")
+
+    if state["final_stop_loss"] and state["final_take_profit"] and state["final_entry_zone"]:
+        ez = state["final_entry_zone"]
+        entry = (ez[0] + ez[1]) / 2
+        risk   = abs(entry - state["final_stop_loss"])
+        reward = abs(state["final_take_profit"] - entry)
+        rr = reward / risk if risk > 0 else 0
+        rr_c = "green" if rr >= 1.5 else "yellow"
+        t.add_row("R:R Ratio", f"[{rr_c}]1 : {rr:.2f}[/{rr_c}]")
+
+    if state["final_key_levels"]:
+        t.add_row("Mức giá chính",
+                  "  ".join(f"[white]{l}[/white]" for l in state["final_key_levels"]))
+
+    panel_color = color if consensus else "red"
+    console.print(Panel(t,
+        title=f"[bold {panel_color}] 🤖 KẾT QUẢ CONSENSUS ENGINE [/bold {panel_color}]",
+        border_style=panel_color))
+
+    # === Technical + Sentiment ===
+    display_result(state["md"], state["tech"], state["sent"],
+                   state["signal"], state["news"], symbol, timeframe, mode)
+
+    # === AI Reasoning ===
+    console.print(Panel(
+        f"[white]{state['final_reasoning']}[/white]",
+        title="[bold cyan]💬 Consensus Reasoning[/bold cyan]",
+        border_style="cyan"
+    ))
+
+    # === Warning ===
+    if warning:
+        console.print(Panel(
+            f"[bold red]{warning}[/bold red]",
+            title="[bold red]⚠️ Cảnh Báo[/bold red]",
+            border_style="red"
+        ))
+
 
 def display_result(md, tech, sent, sig, news_raw, symbol, timeframe, mode):
     clear()
@@ -469,9 +560,10 @@ def main():
     timeframe = select_timeframe()
     interval  = select_interval()
     use_live  = select_mode()
-    use_openai = select_openai()
 
-    mode_label = f"{'🔴 LIVE' if use_live else '🟡 DEMO'}{'  🤖 GPT-4o' if use_openai else ''}"
+    has_openai = bool(os.getenv("OPENAI_KEY") or os.getenv("OPENAI_API_KEY"))
+    use_openai = select_openai() if has_openai else False
+    mode_label = f"{'\ud83d\udd34 LIVE' if use_live else '\ud83d\udfe1 DEMO'}{'  \ud83e\udd16 Consensus' if use_openai else ''}"
 
     console.print(f"\n[bold green]✓ Cấu hình:[/bold green]  "
                   f"[white]{symbol}[/white] / [cyan]{timeframe}[/cyan] / "
@@ -492,24 +584,22 @@ def main():
             progress.add_task(
                 f"🧠 Đang phân tích {symbol} ({timeframe}) lần #{cycle}...", total=None)
             try:
-                md, tech, sent, sig, news_raw = run_analysis(symbol, timeframe, use_live)
+                if use_openai:
+                    # LangGraph Consensus Engine
+                    state = run_analysis(symbol, timeframe, use_live)
+                else:
+                    # Phân tích kỹ thuật đơn giản
+                    md, tech, sent, sig, news_raw = run_analysis_no_openai(symbol, timeframe, use_live)
             except Exception as e:
                 console.print(f"\n[red]❌ Lỗi phân tích: {e}[/red]")
+                import traceback; traceback.print_exc()
                 time.sleep(5)
                 continue
 
-        display_result(md, tech, sent, sig, news_raw, symbol, timeframe, mode_label)
-
-        # GPT-4o phân tích sâu
         if use_openai:
-            with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                console=console, transient=True,
-            ) as progress:
-                progress.add_task("🤖 GPT-4o đang phân tích...", total=None)
-                ai_result = run_openai_analysis(symbol, timeframe, md, tech, sent, sig, news_raw)
-            display_openai_panel(ai_result, sig.action.value, sig.confidence)
+            display_graph_result(state, symbol, timeframe, mode_label)
+        else:
+            display_result(md, tech, sent, sig, news_raw, symbol, timeframe, mode_label)
 
         # Chỉ chạy 1 lần
         if interval == 0:
@@ -547,8 +637,9 @@ def main():
                     timeframe = select_timeframe()
                     interval  = select_interval()
                     use_live  = select_mode()
-                    use_openai = select_openai()
-                    mode_label = f"{'🔴 LIVE' if use_live else '🟡 DEMO'}{'  🤖 GPT-4o' if use_openai else ''}"
+                    has_openai = bool(os.getenv("OPENAI_KEY") or os.getenv("OPENAI_API_KEY"))
+                    use_openai = select_openai() if has_openai else False
+                    mode_label = f"{'\ud83d\udd34 LIVE' if use_live else '\ud83d\udfe1 DEMO'}{'  \ud83e\udd16 Consensus' if use_openai else ''}"
                     cycle = 0
             except (EOFError, KeyboardInterrupt):
                 break

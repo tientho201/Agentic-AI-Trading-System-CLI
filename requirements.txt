@@ -3,6 +3,7 @@ requests
 pydantic
 pandas
 langchain
+langgraph
 openai
 tiktoken
 setuptools

@@ -85,4 +85,16 @@ class TradingSignal(BaseModel):
     take_profit: Optional[float] = Field(description="Take-profit price", default=None)
     reasoning: str = Field(description="Reasoning behind the trading signal")
     timestamp: datetime = Field(description="Timestamp of the trading signal", default_factory=datetime.utcnow )
-    
+
+# Langgraph
+class AgentState(BaseModel):
+    symbol: str
+    timeframe: str
+    market_data: MarketData
+    news_data: List[NewsItem]
+    technical_result: TechnicalResult
+    sentiment_result: SetimentResults
+    trading_signal: TradingSignal 
+    signals: List[str]
+    next_step: str
+    history: List[str]
