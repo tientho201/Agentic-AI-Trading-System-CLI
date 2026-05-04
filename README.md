@@ -81,7 +81,7 @@
 ## 📂 Project Structure
 
 ```
-Agentic-AI-System/
+Agentic-AI-Trading-System-CLI/
 ├── .github/
 │   └── workflows/
 │       └── main.yml              # GitHub Actions CI/CD pipeline
@@ -121,8 +121,8 @@ Agentic-AI-System/
 ### 1. Clone the repository and create a virtual environment
 
 ```bash
-git clone https://github.com/<your-username>/Agentic-AI-System.git
-cd Agentic-AI-System
+git clone https://github.com/tientho201/Agentic-AI-Trading-System-CLI.git
+cd Agentic-AI-Trading-System-CLI
 
 python3 -m venv .venv
 source .venv/bin/activate        # Linux / macOS
